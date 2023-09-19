@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-n_epochs = 10
+n_epochs = 30
 batch_size_train = 200
 batch_size_test = 1000
 learning_rate = 1e-3
@@ -110,7 +110,7 @@ def eval(data_loader, model, device):
 
 def logistic_regression(dataset_name, device):
     # TODO: implement logistic regression here
-    logistic_regression_model
+    logistic_regression_model = None
     if dataset_name == "MNIST":
         logistic_regression_model = LogisticRegressionModel(28*28).to(device)
     else:
