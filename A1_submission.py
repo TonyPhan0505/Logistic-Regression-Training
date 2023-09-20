@@ -98,7 +98,8 @@ def train(epoch, data_loader, model, device, optimizer):
         target = target.to(device)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.cross_entropy(output, target)
+        probabilities = F.softmax(output, dim=1)
+        loss = F.cross_entropy(probabilities, target)
         loss.backward()
         optimizer.step()
         if batch_idx % log_interval == 0:
@@ -151,20 +152,26 @@ def tune_hyper_parameter(dataset_name, target_metric, device):
     best_params = best_metric = None
     if target_metric == "acc":
         hyperparameter_grid = {
-            'learning_rate': [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
-            'batch_size_train': [200, 300, 400, 500, 600, 700],
-            'weight_decay': [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-1]
+            'learning_rate': [1e-6, 1e-3, 1e0],
+            'batch_size_train': [70, 200, 400],
+            'weight_decay': [1e-8, 1e-5, 1e-2]
         }
         learningRateIndex = 0
         batchSizeTrainIndex = 0
         weightDecayIndex = 0
         currentAccuracy = 0
-        while learningRateIndex <= 5:
-            while batchSizeTrainIndex <= 5:
-                while weightDecayIndex <= 5:
+        while learningRateIndex <= 2:
+            while batchSizeTrainIndex <= 2:
+                while weightDecayIndex <= 2:
                     learningRate = hyperparameter_grid['learning_rate'][learningRateIndex]
                     batchSizeTrain = hyperparameter_grid['batch_size_train'][batchSizeTrainIndex]
                     weightDecay = hyperparameter_grid['weight_decay'][weightDecayIndex]
+                    print("\nTuned parameters:")
+                    print({
+                        'learning_rate': learningRate,
+                        'batch_size_train': batchSizeTrain,
+                        'weight_decay': weightDecay
+                    })
                     results = logistic_regression(dataset_name, device, learningRate, batchSizeTrain, weightDecay)
                     accuracy = results['accuracy']
                     if accuracy > currentAccuracy:
@@ -176,24 +183,33 @@ def tune_hyper_parameter(dataset_name, target_metric, device):
                             'weight_decay': weightDecay
                         }
                     weightDecayIndex += 1
+                weightDecayIndex = 0
                 batchSizeTrainIndex += 1
+            batchSizeTrainIndex = 0
+            weightDecayIndex = 0
             learningRateIndex += 1
     else:
         hyperparameter_grid = {
-            'learning_rate': [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
-            'n_epochs': [20, 30, 40, 50, 60, 70],
-            'weight_decay': [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-1]
+            'learning_rate': [1e-6, 1e-3, 1e0],
+            'n_epochs': [20, 30, 40],
+            'weight_decay': [1e-8, 1e-5, 1e-2]
         }
         learningRateIndex = 0
         nEpochsIndex = 0
         weightDecayIndex = 0
         currentLoss = float('inf')
-        while learningRateIndex <= 5:
-            while nEpochsIndex <= 5:
-                while weightDecayIndex <= 5:
+        while learningRateIndex <= 2:
+            while nEpochsIndex <= 2:
+                while weightDecayIndex <= 2:
                     learningRate = hyperparameter_grid['learning_rate'][learningRateIndex]
                     nEpochs = hyperparameter_grid['n_epochs'][nEpochsIndex]
                     weightDecay = hyperparameter_grid['weight_decay'][weightDecayIndex]
+                    print("\nTuned parameters:")
+                    print({
+                        'learning_rate': learningRate,
+                        'n_epochs': nEpochs,
+                        'weight_decay': weightDecay
+                    })
                     results = logistic_regression(dataset_name, device, learningRate, 200, weightDecay, nEpochs)
                     loss = results['loss']
                     if loss < currentLoss:
@@ -205,6 +221,9 @@ def tune_hyper_parameter(dataset_name, target_metric, device):
                             'weight_decay': weightDecay
                         }
                     weightDecayIndex += 1
+                weightDecayIndex = 0
                 nEpochsIndex += 1
+            weightDecayIndex = 0
+            nEpochsIndex = 0
             learningRateIndex += 1
     return best_params, best_metric
